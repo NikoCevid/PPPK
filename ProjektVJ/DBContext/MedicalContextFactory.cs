@@ -10,8 +10,6 @@ namespace Medical.DBContext
         {
             var options = new DbContextOptionsBuilder<MedicalContext>()
                .UseNpgsql("Host=localhost;Port=5432;Database=medical;Username=postgres;Password=password;")
-
-
                 .Options;
 
             return new MedicalContext(options);

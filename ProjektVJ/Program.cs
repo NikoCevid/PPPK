@@ -14,6 +14,7 @@ static MedicalContext CreateDbContext()
 
 while (true)
 {
+   
     Console.Clear();
     Console.WriteLine("=== MEDICAL SYSTEM ===");
     Console.WriteLine("1. Show all patients");
@@ -22,18 +23,28 @@ while (true)
     Console.WriteLine("4. Delete patient");
     Console.WriteLine("5. Add diagnosis");
     Console.WriteLine("6. List diagnoses");
-    Console.WriteLine("7. Add drug");
-    Console.WriteLine("8. List drugs");
-    Console.WriteLine("9. Assign drug (prescription)");
-    Console.WriteLine("10. List prescriptions");
-    Console.WriteLine("11. Schedule examination");
-    Console.WriteLine("12. List examinations");
-    Console.WriteLine("13. Show patient history");
+    Console.WriteLine("7. Edit diagnosis");
+    Console.WriteLine("8. Delete diagnosis");
+    Console.WriteLine("9. Add drug");
+    Console.WriteLine("10. List drugs");
+    Console.WriteLine("11. Edit drug");
+    Console.WriteLine("12. Delete drug");
+    Console.WriteLine("13. Assign prescription");
+    Console.WriteLine("14. List prescriptions");
+    Console.WriteLine("15. Edit prescription");
+    Console.WriteLine("16. Delete prescription");
+    Console.WriteLine("17. Schedule examination");
+    Console.WriteLine("18. List examinations");
+    Console.WriteLine("19. Edit examination");
+    Console.WriteLine("20. Delete examination");
+    Console.WriteLine("21. Show patient history");
     Console.WriteLine("0. Exit");
     Console.Write("Choose option: ");
+    
 
     var choice = Console.ReadLine();
 
+          
     try
     {
         switch (choice)
@@ -42,15 +53,28 @@ while (true)
             case "2": CreatePatient(); break;
             case "3": UpdatePatient(); break;
             case "4": DeletePatient(); break;
+
             case "5": AddDiagnosis(); break;
             case "6": ListDiagnoses(); break;
-            case "7": CreateDrug(); break;
-            case "8": ListDrugs(); break;
-            case "9": CreatePrescription(); break;
-            case "10": ListPrescriptions(); break;
-            case "11": ScheduleExamination(); break;
-            case "12": ListExaminations(); break;
-            case "13": ShowPatientDetails(); break;
+            case "7": UpdateDiagnosis(); break;
+            case "8": DeleteDiagnosis(); break;
+
+            case "9": CreateDrug(); break;
+            case "10": ListDrugs(); break;
+            case "11": UpdateDrug(); break;
+            case "12": DeleteDrug(); break;
+
+            case "13": CreatePrescription(); break;
+            case "14": ListPrescriptions(); break;
+            case "15": UpdatePrescription(); break;
+            case "16": DeletePrescription(); break;
+
+            case "17": ScheduleExamination(); break;
+            case "18": ListExaminations(); break;
+            case "19": UpdateExamination(); break;
+            case "20": DeleteExamination(); break;
+
+            case "21": ShowPatientDetails(); break;
             case "0": return;
             default: Console.WriteLine("Invalid option."); break;
         }
@@ -64,10 +88,14 @@ while (true)
     Console.ReadLine();
 }
 
+
 static void ListPatients()
 {
     using var db = CreateDbContext();
-    var patients = db.Patients.OrderBy(p => p.LastName).ToList();
+
+    var patients = db.Patients
+        .OrderBy(p => p.LastName)
+        .ToList();
 
     foreach (var p in patients)
         Console.WriteLine($"{p.Id} | {p.FirstName} {p.LastName} | OIB: {p.OIB}");
@@ -87,6 +115,10 @@ static void CreatePatient()
     var bd = DateTime.ParseExact(Console.ReadLine()!, "dd.MM.yyyy", CultureInfo.InvariantCulture);
     Console.Write("Gender: ");
     var g = Console.ReadLine()!;
+    Console.Write("Residence address: ");
+    var ra = Console.ReadLine()!;
+    Console.Write("Permanent address: ");
+    var pa = Console.ReadLine()!;
 
     db.Patients.Add(new Patient
     {
@@ -94,7 +126,9 @@ static void CreatePatient()
         LastName = ln,
         OIB = oib,
         BirthDate = bd,
-        Gender = g
+        Gender = g,
+        ResidenceAddress = ra,
+        PermanentAddress = pa
     });
 
     db.SaveChanges();
@@ -130,6 +164,7 @@ static void DeletePatient()
     db.SaveChanges();
 }
 
+
 static void AddDiagnosis()
 {
     using var db = CreateDbContext();
@@ -145,7 +180,7 @@ static void AddDiagnosis()
     {
         PatientId = pid,
         Description = desc,
-        FromDate = from
+        FromDate = DateTime.UtcNow
     });
 
     db.SaveChanges();
@@ -163,15 +198,64 @@ static void ListDiagnoses()
         Console.WriteLine($"{d.Id} | {d.Description} | {d.Patient.LastName}");
 }
 
+static void UpdateDiagnosis()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Diagnosis ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var d = db.Diagnoses.Find(id);
+    if (d == null) return;
+
+    Console.Write("New description: ");
+    d.Description = Console.ReadLine()!;
+
+    db.SaveChanges();
+}
+
+static void DeleteDiagnosis()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Diagnosis ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var d = db.Diagnoses.Find(id);
+    if (d == null) return;
+
+    db.Diagnoses.Remove(d);
+    db.SaveChanges();
+}
+
+
 static void CreateDrug()
 {
     using var db = CreateDbContext();
+
     Console.Write("Name: ");
     var name = Console.ReadLine()!;
 
-    db.Drugs.Add(new Drug { Name = name });
+    Console.Write("Form (tablet/syrup/etc): ");
+    var form = Console.ReadLine()!;
+
+    Console.Write("Strength (e.g. 5mg): ");
+    var strength = Console.ReadLine()!;
+
+    Console.Write("Frequency (e.g. 2x daily): ");
+    var frequency = Console.ReadLine()!;
+
+    db.Drugs.Add(new Drug
+    {
+        Name = name,
+        Form = form,
+        Strength = strength,
+        Frequency = frequency
+    });
+
     db.SaveChanges();
 }
+
 
 static void ListDrugs()
 {
@@ -179,6 +263,37 @@ static void ListDrugs()
     foreach (var d in db.Drugs)
         Console.WriteLine($"{d.Id} | {d.Name}");
 }
+
+static void UpdateDrug()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Drug ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var d = db.Drugs.Find(id);
+    if (d == null) return;
+
+    Console.Write("New name: ");
+    d.Name = Console.ReadLine()!;
+
+    db.SaveChanges();
+}
+
+static void DeleteDrug()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Drug ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var d = db.Drugs.Find(id);
+    if (d == null) return;
+
+    db.Drugs.Remove(d);
+    db.SaveChanges();
+}
+
 
 static void CreatePrescription()
 {
@@ -190,13 +305,17 @@ static void CreatePrescription()
     int did = int.Parse(Console.ReadLine()!);
     Console.Write("Doctor ID: ");
     int doc = int.Parse(Console.ReadLine()!);
+    Console.Write("Condition: ");
+    var condition = Console.ReadLine()!;
 
     db.Prescriptions.Add(new Prescription
     {
         PatientId = pid,
         DrugId = did,
         DoctorId = doc,
+        Condition = condition,
         StartDate = DateTime.UtcNow
+
     });
 
     db.SaveChanges();
@@ -215,9 +334,50 @@ static void ListPrescriptions()
         Console.WriteLine($"{p.Id} | {p.Patient.LastName} | {p.Drug.Name}");
 }
 
+static void UpdatePrescription()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Prescription ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var p = db.Prescriptions.Find(id);
+    if (p == null) return;
+
+    Console.Write("New drug ID: ");
+    p.DrugId = int.Parse(Console.ReadLine()!);
+
+    db.SaveChanges();
+}
+
+static void DeletePrescription()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Prescription ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var p = db.Prescriptions.Find(id);
+    if (p == null) return;
+
+    db.Prescriptions.Remove(p);
+    db.SaveChanges();
+}
+
+
 static void ScheduleExamination()
 {
     using var db = CreateDbContext();
+
+    Console.WriteLine("\nPatients:");
+    foreach (var p in db.Patients)
+        Console.WriteLine($"{p.Id} | {p.FirstName} {p.LastName}");
+
+    Console.WriteLine("\nDoctors:");
+    foreach (var d in db.Doctors)
+        Console.WriteLine($"{d.Id} | {d.FirstName} {d.LastName} ({d.Specialization})");
+
+    Console.WriteLine();
 
     Console.Write("Patient ID: ");
     int pid = int.Parse(Console.ReadLine()!);
@@ -233,8 +393,9 @@ static void ScheduleExamination()
         PatientId = pid,
         SpecialistDoctorId = did,
         Type = type,
-        ScheduledAt = dt
+        ScheduledAt = DateTime.SpecifyKind(dt, DateTimeKind.Utc)
     });
+
 
     db.SaveChanges();
 }
@@ -246,11 +407,52 @@ static void ListExaminations()
     var list = db.Examinations
         .Include(e => e.Patient)
         .Include(e => e.SpecialistDoctor)
+        .OrderBy(e => e.ScheduledAt)
         .ToList();
 
     foreach (var e in list)
-        Console.WriteLine($"{e.Id} | {e.Type} | {e.Patient.LastName}");
+    {
+        Console.WriteLine(
+            $"{e.Id} | PatientID: {e.PatientId} ({e.Patient.FirstName} {e.Patient.LastName}) | " +
+            $"DoctorID: {e.SpecialistDoctorId} ({e.SpecialistDoctor.FirstName} {e.SpecialistDoctor.LastName}) | " +
+            $"{e.Type} | {e.ScheduledAt:dd.MM.yyyy HH:mm}"
+        );
+    }
 }
+
+static void UpdateExamination()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Examination ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var e = db.Examinations.Find(id);
+    if (e == null) return;
+
+    Console.Write("New type: ");
+    e.Type = Console.ReadLine()!;
+    Console.Write("New date (dd.MM.yyyy HH:mm): ");
+    e.ScheduledAt = DateTime.ParseExact(Console.ReadLine()!, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
+
+    db.SaveChanges();
+}
+
+static void DeleteExamination()
+{
+    using var db = CreateDbContext();
+
+    Console.Write("Examination ID: ");
+    int id = int.Parse(Console.ReadLine()!);
+
+    var e = db.Examinations.Find(id);
+    if (e == null) return;
+
+    db.Examinations.Remove(e);
+    db.SaveChanges();
+}
+
+
 
 static void ShowPatientDetails()
 {
@@ -276,5 +478,5 @@ static void ShowPatientDetails()
         Console.WriteLine($"Drug: {pr.Drug.Name}");
 
     foreach (var e in p.Examinations)
-        Console.WriteLine($"Exam: {e.Type} at {e.ScheduledAt}");
+        Console.WriteLine($"Exam: {e.Type} at {e.ScheduledAt:dd.MM.yyyy HH:mm}");
 }
